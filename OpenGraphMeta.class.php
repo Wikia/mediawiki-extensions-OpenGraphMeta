@@ -68,9 +68,8 @@ class OpenGraphMeta {
 	 * @throws MWException
 	 */
 	public static function onOutputPageParserOutput( OutputPage &$out, ParserOutput $parserOutput ) {
-		global $wgLogo, $wgSitename, $wgXhtmlNamespaces;
-		$egFacebookAppId = MediaWikiServices::getInstance()->getMainConfig()->get( 'egFacebookAppId' ); //FandomChange
-		$egFacebookAdmins = MediaWikiServices::getInstance()->getMainConfig()->get( 'egFacebookAdmins' ); //FandomChange
+		global $egFacebookAppId, $wgLogo, $wgSitename, $wgXhtmlNamespaces;
+		$egFacebookAdmins = null; //FandomChange
 		$setMainImage = $parserOutput->getExtensionData( 'setmainimage' );
 		$setMainTitle = $parserOutput->getExtensionData( 'setmaintitle' );
 
