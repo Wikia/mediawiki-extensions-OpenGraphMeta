@@ -68,8 +68,9 @@ class OpenGraphMeta {
 	 * @throws MWException
 	 */
 	public static function onOutputPageParserOutput( OutputPage &$out, ParserOutput $parserOutput ) {
-		global $egFacebookAppId, $wgLogo, $wgSitename, $wgXhtmlNamespaces;
-		$egFacebookAdmins = null; //FandomChange
+		//global $egFacebookAppId, $wgLogo, $wgSitename, $wgXhtmlNamespaces;
+		global $wgLogo, $wgSitename, $wgXhtmlNamespaces, $egFacebookAppId, $egFacebookAdmins;
+		//$egFacebookAdmins = null; //FandomChange
 		$setMainImage = $parserOutput->getExtensionData( 'setmainimage' );
 		$setMainTitle = $parserOutput->getExtensionData( 'setmaintitle' );
 
@@ -129,31 +130,41 @@ class OpenGraphMeta {
 			$meta['og:image'] = wfExpandUrl( $wgLogo );
 		}
 		$description = $parserOutput->getProperty( 'description' );
-		// Fandom change
-		if ( $title->getNamespace() === NS_MAIN ) {
-			$articleSnippetService = \FandomServices::getArticleSnippetService();
-			$wikiPage = $out->getWikiPage();
-			$articleDescription = $articleSnippetService->getTextSnippet( $wikiPage, 500 );
-		}
-		if ( $description !== false ) {
+		if ( $description !== false ) { // set by Description2 extension, install it if you want proper og:description support
 			$meta['og:description'] = $description;
-		} elseif ( !empty( $articleDescription ) ) {
-			$meta['og:description'] = $articleDescription;
-		}
+		// Fandom change
+//		if ( $title->getNamespace() === NS_MAIN ) {
+//			$articleSnippetService = \FandomServices::getArticleSnippetService();
+//			$wikiPage = $out->getWikiPage();
+//			$articleDescription = $articleSnippetService->getTextSnippet( $wikiPage, 500 );
+//		}
+//		if ( $description !== false ) {
+//			$meta['og:description'] = $description;
+//		} elseif ( !empty( $articleDescription ) ) {
+//			$meta['og:description'] = $articleDescription;
+//		}
 		// end Fandom change
 		$meta['og:url'] = $title->getFullURL();
 		if ( $egFacebookAppId ) {
 			/* begin Fandom change */
-			// $meta["fb:app_id"] = $egFacebookAppId;
+			$meta["fb:app_id"] = $egFacebookAppId;
 			// fb:app_id needs a prefix property declaring the namespace, so just add it directly
-			$out->addHeadItem( "meta:property:fb:app_id",
-				"	" . Html::element(
-					'meta',
-					[ 'property' => 'fb:app_id',
-						'content' => $egFacebookAppId,
-						'prefix' => "fb: http://www.facebook.com/2008/fbml"
-					]
-				) . "\n"
+//			$out->addHeadItem( "meta:property:fb:app_id",
+//				"	" . Html::element(
+//					'meta',
+//					[ 'property' => 'fb:app_id',
+//						'content' => $egFacebookAppId,
+//						'prefix' => "fb: http://www.facebook.com/2008/fbml"
+//					]
+//				) . "\n"
+//			);
+			$out->addHeadItem(
+				'meta:property:fb:app_id',
+				'	' . Html::element( 'meta', [
+					'property' => 'fb:app_id',
+					'content' => $egFacebookAppId,
+					'prefix' => 'fb: http://www.facebook.com/2008/fbml'
+				] ) . "\n"
 			);
 			/* end Fandom change */
 		}
@@ -162,8 +173,15 @@ class OpenGraphMeta {
 		}
 
 		// Fandom change
-		Hooks::run( 'OpenGraphMetaHeaders', [ "meta" => &$meta, "title" => $title ] );
+		//Hooks::run( 'OpenGraphMetaHeaders', [ "meta" => &$meta, "title" => $title ] );
 		// End Fandom change
+		// Add og:image to <meta> tags instead of as a <head> item to get it earlier in the page
+		if ( isset( $meta['og:image'] ) ) {
+			$out->addMeta( 'og:image', $meta['og:image'] );
+			unset( $meta['og:image'] );
+		}
+
+		Hooks::run( 'OpenGraphMetaHeaders', [ &$meta, $title, $out, $parserOutput ] );
 
 		foreach ( $meta as $property => $value ) {
 			if ( $value ) {
