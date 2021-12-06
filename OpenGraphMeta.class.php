@@ -131,9 +131,6 @@ class OpenGraphMeta {
 		} else {
 			$description = $parserOutput->getProperty( 'description' );
 		}
-		if ( $description !== false ) { // set by Description2 extension, install it if you want proper og:description support
-			$meta['og:description'] = $description;
-		}
 		// Fandom change
 		if ( $title->getNamespace() === NS_MAIN ) {
 			$articleSnippetService = \FandomServices::getArticleSnippetService();
