@@ -75,13 +75,8 @@ class OpenGraphMeta {
 		$setMainTitle = $parserOutput->getExtensionData( 'setmaintitle' );
 
 		if ( $setMainImage !== null ) {
-			if ( method_exists( MediaWikiServices::class, 'getRepoGroup' ) ) {
-				// MediaWiki 1.34+
-				$mainImage = MediaWikiServices::getInstance()->getRepoGroup()
-					->findFile( Title::newFromText( $setMainImage, NS_FILE ) );
-			} else {
-				$mainImage = wfFindFile( Title::newFromText( $setMainImage, NS_FILE ) );
-			}
+			$mainImage = MediaWikiServices::getInstance()->getRepoGroup()
+				->findFile( Title::newFromText( $setMainImage, NS_FILE ) );
 		} else {
 			$mainImage = false;
 		}
@@ -129,7 +124,12 @@ class OpenGraphMeta {
 		} elseif ( $isMainpage ) {
 			$meta['og:image'] = wfExpandUrl( $wgLogo );
 		}
-		$description = $parserOutput->getProperty( 'description' );
+		if ( method_exists( $parserOutput, 'getPageProperty' ) ) {
+			// MW 1.38
+			$description = $parserOutput->getPageProperty( 'description' );
+		} else {
+			$description = $parserOutput->getProperty( 'description' );
+		}
 		if ( $description !== false ) { // set by Description2 extension, install it if you want proper og:description support
 			$meta['og:description'] = $description;
 		// Fandom change
