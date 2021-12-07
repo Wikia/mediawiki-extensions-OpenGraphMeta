@@ -158,7 +158,7 @@ class OpenGraphMeta {
 		}
 
 		// Fandom change
-		Hooks::run( 'OpenGraphMetaHeaders', [ "meta" => &$meta, "title" => $title ] );
+		Hooks::run( 'OpenGraphMetaHeaders', [ &$meta, $title ] );
 		// End Fandom change
 
 		foreach ( $meta as $property => $value ) {
