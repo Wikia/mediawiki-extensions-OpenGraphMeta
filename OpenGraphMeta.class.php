@@ -146,25 +146,32 @@ class OpenGraphMeta {
 			$meta['fb:admins'] = $egFacebookAdmins;
 		}
 
-		// Add og:image to <meta> tags instead of as a <head> item to get it earlier in the page
-		if ( isset( $meta['og:image'] ) ) {
-			$out->addMeta( 'og:image', $meta['og:image'] );
-			unset( $meta['og:image'] );
-		}
-
-		Hooks::run( 'OpenGraphMetaHeaders', [ &$meta, $title, $out, $parserOutput ] );
+		// Fandom change begins
+		MediaWikiServices::getInstance()->getHookContainer()
+			->run( 'OpenGraphMetaHeaders', [ &$meta, $title, $out, $parserOutput ] );
 
 		foreach ( $meta as $property => $value ) {
-			if ( $value ) {
-				$out->addHeadItem(
-					"meta:property:$property",
-					'	' . Html::element( 'meta', [
-						'property' => $property,
-						'content' => $value
-					] ) . "\n"
-				);
+			$notAddedYet = self::metaTagNotAlreadyAdded( $out, $property );
+			if ( $value && $notAddedYet ) {
+				$out->addMeta( $property, $value );
 			}
 		}
+		// Fandom change ends
+	}
+
+	/**
+	 * Avoid duplicating Meta tags if another extension already adds them or if OutputPageParserOutput is run more
+	 * than once (as is the case for File pages).
+	 */
+	private static function metaTagNotAlreadyAdded( OutputPage $out, string $tagName ): bool {
+		return empty(
+			array_filter(
+				$out->getMetaTags(),
+				static function ( $tag ) use ( $tagName ) {
+					return $tag[0] == $tagName;
+				}
+			)
+		);
 	}
 
 }
